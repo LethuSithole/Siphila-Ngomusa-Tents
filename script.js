@@ -309,17 +309,107 @@ function simulateImageLoad() {
 document.addEventListener("DOMContentLoaded", function () {
   simulateImageLoad();
 
+  // Mobile-specific enhancements
+  const isMobile = window.innerWidth <= 768;
+
   // Add pricing calculator interaction
   const pricingCards = document.querySelectorAll(".pricing-card");
   pricingCards.forEach((card) => {
-    card.addEventListener("mouseenter", function () {
-      this.style.borderColor = "#f39c12";
-    });
+    if (isMobile) {
+      // Use touch events for mobile
+      card.addEventListener("touchstart", function () {
+        this.style.borderColor = "#f39c12";
+      });
 
-    card.addEventListener("mouseleave", function () {
-      if (!this.classList.contains("featured")) {
-        this.style.borderColor = "transparent";
-      }
-    });
+      card.addEventListener("touchend", function () {
+        if (!this.classList.contains("featured")) {
+          setTimeout(() => {
+            this.style.borderColor = "transparent";
+          }, 300);
+        }
+      });
+    } else {
+      // Use mouse events for desktop
+      card.addEventListener("mouseenter", function () {
+        this.style.borderColor = "#f39c12";
+      });
+
+      card.addEventListener("mouseleave", function () {
+        if (!this.classList.contains("featured")) {
+          this.style.borderColor = "transparent";
+        }
+      });
+    }
   });
+
+  // Mobile navigation improvements
+  if (isMobile) {
+    // Reduce scroll offset for mobile navigation
+    document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
+      anchor.addEventListener("click", function (e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute("href"));
+        if (target) {
+          const offsetTop = target.offsetTop - 100; // Larger offset for mobile
+          window.scrollTo({
+            top: offsetTop,
+            behavior: "smooth",
+          });
+        }
+      });
+    });
+  }
+
+  // Mobile gallery improvements
+  const galleryItems = document.querySelectorAll(".gallery-item");
+  if (isMobile) {
+    galleryItems.forEach((item) => {
+      // Show overlay on first touch for mobile
+      item.addEventListener("touchstart", function () {
+        const overlay = this.querySelector(".gallery-overlay");
+        overlay.style.transform = "translateY(0)";
+      });
+
+      // Hide overlay after delay on mobile
+      item.addEventListener("touchend", function () {
+        const overlay = this.querySelector(".gallery-overlay");
+        setTimeout(() => {
+          overlay.style.transform = "translateY(100%)";
+        }, 2000);
+      });
+    });
+  }
 });
+
+// Mobile-specific scroll optimizations
+let ticking = false;
+
+function updateNavbarOnScroll() {
+  const navbar = document.querySelector(".navbar");
+  if (window.scrollY > 50) {
+    navbar.style.background =
+      "linear-gradient(135deg, rgba(44, 62, 80, 0.95), rgba(52, 152, 219, 0.95))";
+    navbar.style.backdropFilter = "blur(10px)";
+  } else {
+    navbar.style.background = "linear-gradient(135deg, #2c3e50, #3498db)";
+    navbar.style.backdropFilter = "none";
+  }
+  ticking = false;
+}
+
+// Throttle scroll events for better mobile performance
+window.addEventListener("scroll", function () {
+  if (!ticking) {
+    requestAnimationFrame(updateNavbarOnScroll);
+    ticking = true;
+  }
+});
+
+// Mobile viewport fix
+function setMobileViewportHeight() {
+  const vh = window.innerHeight * 0.01;
+  document.documentElement.style.setProperty("--vh", `${vh}px`);
+}
+
+window.addEventListener("resize", setMobileViewportHeight);
+setMobileViewportHeight();
