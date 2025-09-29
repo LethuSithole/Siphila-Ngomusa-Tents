@@ -561,3 +561,160 @@ document.addEventListener("DOMContentLoaded", function () {
   // Update every 5 minutes
   setInterval(addBusinessHoursIndicator, 300000);
 });
+
+// WhatsApp Quick Replies and Auto Response System
+const WhatsAppAutoResponse = {
+  // Auto-response messages based on business hours
+  autoResponses: {
+    online:
+      "Hi! This is Siphila Ngomusa Tents Hire CC. 👋\n\nThank you for reaching out! We're currently online and ready to help you with your tent rental needs. Someone from our team will respond to you shortly.\n\n🎪 What can we help you with today?",
+
+    offline:
+      "Hi! This is Siphila Ngomusa Tents Hire CC. 👋\n\nThank you for contacting us! We're currently offline, but don't worry - we've received your message and will get back to you as soon as someone is online.\n\n⏰ Our business hours:\n• Monday - Friday: 8AM - 6PM\n• Saturday: 8AM - 4PM\n• Sunday: Emergency calls only\n\n🎪 We look forward to helping you create a memorable event!",
+
+    weekend:
+      "Hi! This is Siphila Ngomusa Tents Hire CC. 👋\n\nThank you for reaching out! It's currently the weekend, but we've received your message. Our team will respond first thing Monday morning.\n\n⏰ We'll be back online:\n• Monday: 8AM - 6PM\n\n🎪 We appreciate your patience and look forward to helping you!",
+  },
+
+  // Quick reply templates for common responses
+  quickReplies: {
+    greeting:
+      "Hello! Welcome to Siphila Ngomusa Tents Hire CC! 👋 How can we help you create an amazing event today?",
+
+    pricing: {
+      general:
+        "📋 **TENT RENTAL PRICING**\n\n🏠 **Small Tent (3m x 3m)**: R800/day\n• Seats 20-25 people\n• Basic setup included\n\n🎪 **Medium Tent (6m x 9m)**: R1,500/day\n• Seats 50-75 people\n• Professional setup & flooring\n\n🏛️ **Large Tent (12m x 18m)**: R2,800/day\n• Seats 150-200 people\n• Premium setup & lighting\n\n🎭 **Marquee (15m x 30m)**: R5,500/day\n• Seats 300+ people\n• Complete setup service\n\n💡 **Additional Services**:\n• Chairs: R7 each\n• Tables: R70 each\n• Gas stove set: R750\n• Pots: R100 each\n\n📞 Would you like a custom quote for your specific event?",
+
+      wedding:
+        "💒 **WEDDING TENT PACKAGES**\n\n✨ Our wedding tents create the perfect romantic atmosphere for your special day!\n\n🌟 **Popular Wedding Sizes**:\n• Medium (50-75 guests): R1,500/day\n• Large (150-200 guests): R2,800/day\n• Marquee (300+ guests): R5,500/day\n\n💐 **Included**:\n• Professional setup\n• Quality flooring\n• Basic lighting\n• Weather protection\n\n🎊 **Add-ons Available**:\n• Premium lighting\n• Dance floor setup\n• Catering area preparation\n\nTell us about your wedding and we'll create a custom package! 💕",
+
+      corporate:
+        "🏢 **CORPORATE EVENT TENTS**\n\n🎯 Professional tent solutions for your business events!\n\n📊 **Perfect for**:\n• Conferences & seminars\n• Product launches\n• Team building events\n• Corporate parties\n• Trade shows\n\n💼 **Features**:\n• Professional appearance\n• AV equipment ready\n• Climate control compatible\n• Branded setup options\n\n💰 **Starting from R1,500/day**\n\nWhat type of corporate event are you planning? 🤝",
+    },
+
+    availability:
+      "📅 **CHECKING AVAILABILITY**\n\nTo check availability and provide accurate pricing, please share:\n\n📍 **Event Location**: Where will your event be?\n📅 **Event Date**: When is your event?\n👥 **Guest Count**: How many people will attend?\n🎪 **Tent Size Preference**: Any specific size in mind?\n⏰ **Event Duration**: How many days do you need the tent?\n\nOnce I have these details, I can check our availability and give you a detailed quote! 🎯",
+
+    services:
+      "🎪 **OUR SERVICES**\n\n✅ **Tent Rental Services**:\n• Wedding tents & marquees\n• Corporate event tents\n• Birthday party setups\n• Festival & large event tents\n• Weather protection tents\n\n🛠️ **Additional Services**:\n• Professional tent setup\n• Tables & chairs rental\n• Lighting arrangements\n• Flooring installation\n• Gas stoves & cooking equipment\n• Complete event coordination\n\n📦 **All-Inclusive Packages Available**\n\nWhat type of event are you planning? Let's make it memorable! ✨",
+
+    location:
+      "📍 **SERVICE AREAS**\n\nWe proudly serve the greater Johannesburg area and surrounding regions!\n\n🏠 **Our Location**:\n1736 Legodi Street\nNguni Section\nVosloorus, 1475\n\n🚚 **Delivery & Setup**:\n• FREE delivery & setup within 5km radius\n• Extended delivery available\n• Professional installation team\n• Complete setup & takedown service\n\n📞 Where is your event located? We'll confirm if it's in our service area!",
+
+    booking:
+      "📋 **BOOKING PROCESS**\n\n✅ **How to Book**:\n1️⃣ Share your event details\n2️⃣ Receive detailed quote\n3️⃣ Confirm booking with deposit\n4️⃣ We handle setup & takedown\n\n💳 **Payment Options**:\n• Bank transfer\n• Cash payment\n• Installment plans available\n\n📞 **What's Next?**\nShare your event details and we'll send you a personalized quote within 2 hours!\n\n🎪 Ready to book your perfect tent? Let's get started!",
+
+    contact:
+      "📞 **CONTACT INFORMATION**\n\n📱 **Phone Numbers**:\n• Primary: +27 69 490 5342\n• Secondary: +27 71 160 0863\n\n📧 **Email**: lethusithole7@gmail.com\n\n📍 **Address**:\n1736 Legodi Street\nNguni Section, Vosloorus 1475\n\n⏰ **Business Hours**:\n• Monday - Friday: 8AM - 6PM\n• Saturday: 8AM - 4PM\n• Sunday: Emergency calls only\n\n💬 **You're already chatting with us on WhatsApp - the fastest way to get help!**",
+
+    thankyou:
+      "🙏 **Thank you for choosing Siphila Ngomusa Tents Hire CC!**\n\nWe're excited to be part of your special event! 🎉\n\n✅ **What happens next**:\n• We'll finalize all details\n• Confirm your booking\n• Handle professional setup\n• Ensure everything is perfect\n\n📞 **Questions?** Just message us anytime!\n\n🌟 We can't wait to help make your event unforgettable!",
+  },
+
+  // Function to get appropriate auto-response based on business hours
+  getAutoResponse: function () {
+    const { isOpen } = checkBusinessHours();
+    const now = new Date();
+    const day = now.getDay();
+
+    if (day === 0) {
+      // Sunday
+      return this.autoResponses.weekend;
+    } else if (isOpen) {
+      return this.autoResponses.online;
+    } else {
+      return this.autoResponses.offline;
+    }
+  },
+
+  // Function to display quick replies (for reference/training)
+  displayQuickReplies: function () {
+    console.log("=== SIPHILA NGOMUSA TENTS - QUICK REPLIES ===");
+    console.log("Auto Response:", this.getAutoResponse());
+    console.log("\n=== QUICK REPLY TEMPLATES ===");
+    Object.keys(this.quickReplies).forEach((key) => {
+      if (typeof this.quickReplies[key] === "object") {
+        console.log(`\n${key.toUpperCase()}:`);
+        Object.keys(this.quickReplies[key]).forEach((subKey) => {
+          console.log(
+            `  ${subKey}: ${this.quickReplies[key][subKey].substring(
+              0,
+              100
+            )}...`
+          );
+        });
+      } else {
+        console.log(`\n${key}: ${this.quickReplies[key].substring(0, 100)}...`);
+      }
+    });
+  },
+};
+
+// Function to copy quick replies to clipboard (for easy use)
+function copyQuickReply(replyType, subType = null) {
+  let text;
+  if (subType && WhatsAppAutoResponse.quickReplies[replyType][subType]) {
+    text = WhatsAppAutoResponse.quickReplies[replyType][subType];
+  } else if (WhatsAppAutoResponse.quickReplies[replyType]) {
+    text = WhatsAppAutoResponse.quickReplies[replyType];
+  } else {
+    text = WhatsAppAutoResponse.getAutoResponse();
+  }
+
+  navigator.clipboard
+    .writeText(text)
+    .then(function () {
+      console.log("Quick reply copied to clipboard!");
+      // You could show a toast notification here
+    })
+    .catch(function (err) {
+      console.log("Could not copy text: ", err);
+    });
+}
+
+// Enhanced WhatsApp link functionality with auto-response info
+document.addEventListener("DOMContentLoaded", function () {
+  // Add information about auto-responses to WhatsApp links
+  const whatsappLinks = document.querySelectorAll('a[href*="wa.me"]');
+
+  whatsappLinks.forEach((link) => {
+    // Add data attribute with auto-response info
+    const autoResponse = WhatsAppAutoResponse.getAutoResponse();
+    link.setAttribute("data-auto-response", autoResponse);
+
+    // Update title to inform users about auto-response
+    const originalTitle = link.title || "";
+    link.title =
+      originalTitle +
+      "\n\nYou will receive an automatic welcome message when you start the chat.";
+
+    // Enhanced click tracking
+    link.addEventListener("click", function () {
+      console.log("WhatsApp chat initiated");
+      console.log(
+        "Auto-response will be:",
+        autoResponse.substring(0, 100) + "..."
+      );
+
+      // Store the interaction for potential follow-up
+      localStorage.setItem(
+        "whatsapp_last_interaction",
+        new Date().toISOString()
+      );
+      localStorage.setItem("whatsapp_auto_response_sent", autoResponse);
+    });
+  });
+
+  // Initialize quick replies system (for development/testing)
+  if (
+    window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1"
+  ) {
+    console.log("WhatsApp Quick Replies System Loaded");
+    WhatsAppAutoResponse.displayQuickReplies();
+
+    // Make functions available globally for testing
+    window.WhatsAppAutoResponse = WhatsAppAutoResponse;
+    window.copyQuickReply = copyQuickReply;
+  }
+});
