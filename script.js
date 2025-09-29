@@ -413,3 +413,151 @@ function setMobileViewportHeight() {
 
 window.addEventListener("resize", setMobileViewportHeight);
 setMobileViewportHeight();
+
+// WhatsApp Integration Functionality
+document.addEventListener("DOMContentLoaded", function () {
+  // WhatsApp floating button functionality
+  const whatsappFloat = document.getElementById("whatsapp-float");
+
+  if (whatsappFloat) {
+    // Add click tracking for analytics (optional)
+    whatsappFloat.addEventListener("click", function () {
+      console.log("WhatsApp chat initiated");
+      // You can add Google Analytics tracking here if needed
+      // gtag('event', 'click', { event_category: 'WhatsApp', event_label: 'Floating Button' });
+    });
+
+    // Show/hide floating button based on scroll position
+    let isVisible = true;
+    window.addEventListener("scroll", function () {
+      const scrollTop =
+        window.pageYOffset || document.documentElement.scrollTop;
+      const windowHeight = window.innerHeight;
+      const documentHeight = document.documentElement.scrollHeight;
+
+      // Hide button when near footer to avoid overlap
+      if (scrollTop + windowHeight > documentHeight - 200) {
+        if (isVisible) {
+          whatsappFloat.style.opacity = "0.5";
+          whatsappFloat.style.transform = "scale(0.8)";
+          isVisible = false;
+        }
+      } else {
+        if (!isVisible) {
+          whatsappFloat.style.opacity = "1";
+          whatsappFloat.style.transform = "scale(1)";
+          isVisible = true;
+        }
+      }
+    });
+  }
+
+  // Generate dynamic WhatsApp messages based on context
+  const whatsappLinks = document.querySelectorAll('a[href*="wa.me"]');
+
+  whatsappLinks.forEach((link) => {
+    link.addEventListener("click", function (e) {
+      const currentPage = window.location.hash || "#home";
+      let message = "Hi! I'm interested in your tent rental services.";
+
+      // Customize message based on current section
+      switch (currentPage) {
+        case "#services":
+          message =
+            "Hi! I saw your services page and I'm interested in tent rental. Can you help me with pricing?";
+          break;
+        case "#pricing":
+          message =
+            "Hi! I'm looking at your pricing and would like to get a custom quote for my event.";
+          break;
+        case "#gallery":
+          message =
+            "Hi! I love the tent setups in your gallery. Can you provide similar services for my event?";
+          break;
+        case "#about":
+          message =
+            "Hi! I read about your company and I'm impressed. I need tent rental services for an upcoming event.";
+          break;
+        default:
+          message =
+            "Hi! I'm interested in your tent rental services. Can you help me with pricing and availability?";
+      }
+
+      // Update the href with the dynamic message if it's a basic WhatsApp link
+      const originalHref = this.href;
+      if (!originalHref.includes("text=")) {
+        const baseUrl = originalHref.split("?")[0];
+        this.href = `${baseUrl}?text=${encodeURIComponent(message)}`;
+      }
+    });
+  });
+});
+
+// WhatsApp Business Hours Check
+function checkBusinessHours() {
+  const now = new Date();
+  const day = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
+  const hour = now.getHours();
+
+  let isOpen = false;
+  let message = "";
+
+  // Business hours: Mon-Fri 8AM-6PM, Sat 8AM-4PM, Sun emergency only
+  if (day >= 1 && day <= 5) {
+    // Monday to Friday
+    isOpen = hour >= 8 && hour < 18;
+    message = isOpen
+      ? "We're currently online! We'll respond immediately."
+      : "We're currently offline. We'll respond during business hours (8AM-6PM).";
+  } else if (day === 6) {
+    // Saturday
+    isOpen = hour >= 8 && hour < 16;
+    message = isOpen
+      ? "We're currently online! We'll respond immediately."
+      : "We're currently offline. We'll respond during business hours (8AM-4PM on Saturday).";
+  } else {
+    // Sunday
+    message =
+      "Today is Sunday. We're available for emergency calls only. We'll respond on Monday.";
+  }
+
+  return { isOpen, message };
+}
+
+// Add business hours indicator to WhatsApp buttons (optional)
+function addBusinessHoursIndicator() {
+  const { isOpen, message } = checkBusinessHours();
+  const whatsappElements = document.querySelectorAll(
+    ".whatsapp-float, .whatsapp-contact"
+  );
+
+  whatsappElements.forEach((element) => {
+    element.title = message;
+
+    // Add online/offline indicator
+    if (!element.querySelector(".status-indicator")) {
+      const indicator = document.createElement("div");
+      indicator.className = `status-indicator ${isOpen ? "online" : "offline"}`;
+      indicator.style.cssText = `
+        position: absolute;
+        top: -2px;
+        right: -2px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: ${isOpen ? "#4CAF50" : "#FFA726"};
+        border: 2px solid white;
+        z-index: 10;
+      `;
+      element.style.position = "relative";
+      element.appendChild(indicator);
+    }
+  });
+}
+
+// Initialize business hours indicator
+document.addEventListener("DOMContentLoaded", function () {
+  addBusinessHoursIndicator();
+  // Update every 5 minutes
+  setInterval(addBusinessHoursIndicator, 300000);
+});
