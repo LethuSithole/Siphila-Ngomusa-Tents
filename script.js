@@ -1,4 +1,94 @@
-// Smooth scrolling for navigation links
+// Mobile Sidebar Menu Functionality
+class SidebarMenu {
+  constructor() {
+    this.mobileMenuToggle = document.getElementById("mobileMenuToggle");
+    this.sidebarMenu = document.getElementById("sidebarMenu");
+    this.sidebarOverlay = document.getElementById("sidebarOverlay");
+    this.sidebarClose = document.getElementById("sidebarClose");
+    this.sidebarLinks = document.querySelectorAll(".sidebar-link");
+
+    this.init();
+  }
+
+  init() {
+    // Set viewport height for mobile browsers
+    this.setViewportHeight();
+    window.addEventListener('resize', () => this.setViewportHeight());
+    
+    // Event listeners
+    if (this.mobileMenuToggle) {
+      this.mobileMenuToggle.addEventListener("click", () =>
+        this.toggleSidebar()
+      );
+    }
+
+    if (this.sidebarClose) {
+      this.sidebarClose.addEventListener("click", () => this.closeSidebar());
+    }
+
+    if (this.sidebarOverlay) {
+      this.sidebarOverlay.addEventListener("click", () => this.closeSidebar());
+    }
+
+    // Close sidebar when clicking navigation links
+    this.sidebarLinks.forEach((link) => {
+      link.addEventListener("click", () => {
+        this.closeSidebar();
+      });
+    });
+
+    // Close sidebar on escape key
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && this.isOpen()) {
+        this.closeSidebar();
+      }
+    });
+  }
+
+  toggleSidebar() {
+    console.log("Toggling sidebar, currently open:", this.isOpen());
+    if (this.isOpen()) {
+      this.closeSidebar();
+    } else {
+      this.openSidebar();
+    }
+  }
+
+  openSidebar() {
+    console.log("Opening sidebar");
+    this.sidebarMenu.classList.add("active");
+    this.sidebarOverlay.classList.add("active");
+    this.mobileMenuToggle.classList.add("active");
+    document.body.style.overflow = "hidden"; // Prevent background scroll
+
+    // Add a small delay for better animation
+    setTimeout(() => {
+      this.sidebarMenu.setAttribute("aria-hidden", "false");
+    }, 100);
+  }
+
+  closeSidebar() {
+    console.log("Closing sidebar");
+    this.sidebarMenu.classList.remove("active");
+    this.sidebarOverlay.classList.remove("active");
+    this.mobileMenuToggle.classList.remove("active");
+    document.body.style.overflow = ""; // Restore background scroll
+
+    this.sidebarMenu.setAttribute("aria-hidden", "true");
+  }
+
+  isOpen() {
+    return this.sidebarMenu.classList.contains("active");
+  }
+
+  setViewportHeight() {
+    // Fix for mobile viewport height issues
+    let vh = window.innerHeight * 0.01;
+    document.documentElement.style.setProperty('--vh', `${vh}px`);
+  }
+}
+
+// Smooth scrolling for navigation links (updated to include sidebar links)
 document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
   anchor.addEventListener("click", function (e) {
     e.preventDefault();
@@ -43,6 +133,10 @@ const observer = new IntersectionObserver(function (entries) {
 
 // Observe elements for animation
 document.addEventListener("DOMContentLoaded", function () {
+  // Initialize sidebar menu
+  const sidebarMenu = new SidebarMenu();
+  console.log("✅ Sidebar menu initialized successfully");
+
   const animatedElements = document.querySelectorAll(
     ".service-card, .feature, .contact-item, .gallery-item, .pricing-card, .service-price"
   );
