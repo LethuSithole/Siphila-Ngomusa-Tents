@@ -718,3 +718,408 @@ document.addEventListener("DOMContentLoaded", function () {
     window.copyQuickReply = copyQuickReply;
   }
 });
+
+// Email Support System Integration
+class EmailSupportAPI {
+  constructor() {
+    this.apiEndpoint = "https://formspree.io/f/xgvweony"; // Free email service
+    this.fallbackEndpoint = "https://api.web3forms.com/submit"; // Backup service
+    this.init();
+  }
+
+  init() {
+    document.addEventListener("DOMContentLoaded", () => {
+      this.setupEmailForm();
+    });
+  }
+
+  setupEmailForm() {
+    const form = document.getElementById("emailSupportForm");
+    if (!form) return;
+
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      this.handleFormSubmission(form);
+    });
+
+    // Add real-time form validation
+    this.addFormValidation(form);
+  }
+
+  addFormValidation(form) {
+    const requiredFields = form.querySelectorAll("[required]");
+
+    requiredFields.forEach((field) => {
+      field.addEventListener("blur", () => {
+        this.validateField(field);
+      });
+
+      field.addEventListener("input", () => {
+        if (field.classList.contains("error")) {
+          this.validateField(field);
+        }
+      });
+    });
+  }
+
+  validateField(field) {
+    const value = field.value.trim();
+    const fieldType = field.type;
+    let isValid = true;
+
+    // Remove previous error styling
+    field.classList.remove("error");
+    this.removeFieldError(field);
+
+    if (field.hasAttribute("required") && !value) {
+      isValid = false;
+      this.showFieldError(field, "This field is required");
+    } else if (fieldType === "email" && value) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(value)) {
+        isValid = false;
+        this.showFieldError(field, "Please enter a valid email address");
+      }
+    } else if (fieldType === "tel" && value) {
+      const phoneRegex = /^[\+]?[0-9\s\-\(\)]{10,}$/;
+      if (!phoneRegex.test(value)) {
+        isValid = false;
+        this.showFieldError(field, "Please enter a valid phone number");
+      }
+    }
+
+    return isValid;
+  }
+
+  showFieldError(field, message) {
+    field.classList.add("error");
+
+    const errorEl = document.createElement("span");
+    errorEl.className = "field-error";
+    errorEl.textContent = message;
+    errorEl.style.color = "#e74c3c";
+    errorEl.style.fontSize = "0.8rem";
+    errorEl.style.marginTop = "0.25rem";
+
+    field.parentElement.appendChild(errorEl);
+  }
+
+  removeFieldError(field) {
+    const errorEl = field.parentElement.querySelector(".field-error");
+    if (errorEl) {
+      errorEl.remove();
+    }
+  }
+
+  async handleFormSubmission(form) {
+    const submitBtn = form.querySelector(".email-submit-btn");
+    const btnText = submitBtn.querySelector(".btn-text");
+    const btnLoading = submitBtn.querySelector(".btn-loading");
+    const successMessage = document.getElementById("emailFormSuccess");
+    const errorMessage = document.getElementById("emailFormError");
+
+    // Validate all fields first
+    const isFormValid = this.validateForm(form);
+    if (!isFormValid) {
+      this.showMessage(errorMessage, "Please correct the errors above");
+      return;
+    }
+
+    // Show loading state
+    this.setLoadingState(submitBtn, btnText, btnLoading, true);
+    this.hideMessages();
+
+    try {
+      const formData = new FormData(form);
+      const emailData = this.prepareEmailData(formData);
+
+      // Try primary email service (Formspree)
+      const success = await this.sendEmail(this.apiEndpoint, emailData);
+
+      if (success) {
+        this.showMessage(successMessage);
+        form.reset();
+
+        // Track successful submission
+        this.trackEmailSubmission(emailData);
+      } else {
+        // Try backup service if primary fails
+        const backupSuccess = await this.sendEmailBackup(emailData);
+
+        if (backupSuccess) {
+          this.showMessage(successMessage);
+          form.reset();
+          this.trackEmailSubmission(emailData);
+        } else {
+          throw new Error("All email services failed");
+        }
+      }
+    } catch (error) {
+      console.error("Email submission error:", error);
+      this.showMessage(
+        errorMessage,
+        "Failed to send email. Please try again or contact us directly."
+      );
+    } finally {
+      this.setLoadingState(submitBtn, btnText, btnLoading, false);
+    }
+  }
+
+  validateForm(form) {
+    const requiredFields = form.querySelectorAll("[required]");
+    let isValid = true;
+
+    requiredFields.forEach((field) => {
+      if (!this.validateField(field)) {
+        isValid = false;
+      }
+    });
+
+    return isValid;
+  }
+
+  prepareEmailData(formData) {
+    const data = {};
+    for (let [key, value] of formData.entries()) {
+      data[key] = value;
+    }
+
+    // Add metadata
+    data.timestamp = new Date().toISOString();
+    data.source = "Siphila Ngomusa Tents Website";
+    data.userAgent = navigator.userAgent;
+
+    // Format the email subject
+    data._subject = `New Inquiry: ${data.inquiryType || "General"} - ${
+      data.customerName
+    }`;
+
+    return data;
+  }
+
+  async sendEmail(endpoint, data) {
+    try {
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+
+      return response.ok;
+    } catch (error) {
+      console.error("Primary email service error:", error);
+      return false;
+    }
+  }
+
+  async sendEmailBackup(data) {
+    try {
+      // Web3Forms backup service
+      const formData = new FormData();
+      formData.append("access_key", "YOUR_WEB3FORMS_ACCESS_KEY"); // Replace with actual key
+
+      Object.keys(data).forEach((key) => {
+        formData.append(key, data[key]);
+      });
+
+      const response = await fetch(this.fallbackEndpoint, {
+        method: "POST",
+        body: formData,
+      });
+
+      return response.ok;
+    } catch (error) {
+      console.error("Backup email service error:", error);
+      return false;
+    }
+  }
+
+  setLoadingState(submitBtn, btnText, btnLoading, loading) {
+    if (loading) {
+      submitBtn.disabled = true;
+      btnText.style.display = "none";
+      btnLoading.style.display = "flex";
+    } else {
+      submitBtn.disabled = false;
+      btnText.style.display = "block";
+      btnLoading.style.display = "none";
+    }
+  }
+
+  hideMessages() {
+    document.getElementById("emailFormSuccess").style.display = "none";
+    document.getElementById("emailFormError").style.display = "none";
+  }
+
+  showMessage(element, customMessage = null) {
+    this.hideMessages();
+
+    if (customMessage) {
+      const messageP = element.querySelector("p");
+      if (messageP) messageP.textContent = customMessage;
+    }
+
+    element.style.display = "block";
+    element.scrollIntoView({ behavior: "smooth", block: "center" });
+
+    // Auto-hide success messages after 5 seconds
+    if (element.classList.contains("success-message")) {
+      setTimeout(() => {
+        element.style.display = "none";
+      }, 5000);
+    }
+  }
+
+  trackEmailSubmission(data) {
+    // Store submission in localStorage for analytics
+    const submissions = JSON.parse(
+      localStorage.getItem("email_submissions") || "[]"
+    );
+    submissions.push({
+      timestamp: new Date().toISOString(),
+      inquiryType: data.inquiryType,
+      source: "website_form",
+    });
+
+    // Keep only last 10 submissions
+    if (submissions.length > 10) {
+      submissions.splice(0, submissions.length - 10);
+    }
+
+    localStorage.setItem("email_submissions", JSON.stringify(submissions));
+
+    console.log("Email submission tracked:", data.inquiryType);
+  }
+}
+
+// Enhanced Email Template Generation
+class EmailTemplateGenerator {
+  static generateBusinessEmail(data) {
+    return `
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #2c3e50, #3498db); color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+        .content { background: #f9f9f9; padding: 20px; border-radius: 0 0 8px 8px; }
+        .field { margin-bottom: 15px; padding: 10px; background: white; border-radius: 5px; border-left: 4px solid #3498db; }
+        .label { font-weight: bold; color: #2c3e50; }
+        .priority { background: #f39c12; color: white; padding: 5px 10px; border-radius: 3px; display: inline-block; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>🎪 New Customer Inquiry</h2>
+            <p>Siphila Ngomusa Tents Hire CC</p>
+        </div>
+        <div class="content">
+            <div class="priority">Priority: ${
+              data.inquiryType === "urgent" ? "HIGH" : "NORMAL"
+            }</div>
+            
+            <div class="field">
+                <div class="label">Customer Information:</div>
+                <strong>${data.customerName}</strong><br>
+                📧 ${data.customerEmail}<br>
+                ${data.customerPhone ? `📞 ${data.customerPhone}<br>` : ""}
+            </div>
+            
+            <div class="field">
+                <div class="label">Inquiry Type:</div>
+                ${this.formatInquiryType(data.inquiryType)}
+            </div>
+            
+            ${
+              data.eventDate
+                ? `
+            <div class="field">
+                <div class="label">Event Date:</div>
+                📅 ${new Date(data.eventDate).toLocaleDateString("en-ZA", {
+                  weekday: "long",
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
+            </div>`
+                : ""
+            }
+            
+            ${
+              data.eventLocation
+                ? `
+            <div class="field">
+                <div class="label">Event Location:</div>
+                📍 ${data.eventLocation}
+            </div>`
+                : ""
+            }
+            
+            ${
+              data.guestCount
+                ? `
+            <div class="field">
+                <div class="label">Expected Guests:</div>
+                👥 ${data.guestCount}
+            </div>`
+                : ""
+            }
+            
+            <div class="field">
+                <div class="label">Customer Message:</div>
+                ${data.customerMessage.replace(/\n/g, "<br>")}
+            </div>
+            
+            <div class="field">
+                <div class="label">Submission Details:</div>
+                🕐 ${new Date(data.timestamp).toLocaleString("en-ZA")}<br>
+                🌐 Source: ${data.source}<br>
+            </div>
+        </div>
+    </div>
+</body>
+</html>`;
+  }
+
+  static formatInquiryType(type) {
+    const types = {
+      pricing: "💰 Pricing & Quotes",
+      availability: "📅 Availability Check",
+      wedding: "💒 Wedding Services",
+      corporate: "🏢 Corporate Events",
+      birthday: "🎂 Birthday Parties",
+      general: "❓ General Information",
+      support: "🛠️ Customer Support",
+    };
+
+    return types[type] || "📝 General Inquiry";
+  }
+}
+
+// Initialize the email support system
+const emailSupport = new EmailSupportAPI();
+
+// Add CSS for field validation errors
+const validationStyles = `
+  <style>
+    .form-group input.error,
+    .form-group select.error,
+    .form-group textarea.error {
+      border-color: #e74c3c !important;
+      background: rgba(231, 76, 60, 0.1) !important;
+    }
+    
+    .field-error {
+      color: #e74c3c;
+      font-size: 0.8rem;
+      margin-top: 0.25rem;
+      display: block;
+    }
+  </style>
+`;
+
+document.head.insertAdjacentHTML("beforeend", validationStyles);

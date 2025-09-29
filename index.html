@@ -346,7 +346,7 @@
             <div class="contact-item">
               <h3>📧 Email</h3>
               <p>Send us your requirements</p>
-              <a href="mailto:info@siphilangomusa.co.za"
+              <a href="mailto:lethusithole7@gmail.com"
                 >lethusithole7@gmail.com</a
               >
             </div>
@@ -362,6 +362,103 @@
               <p>Monday - Friday: 8AM - 6PM</p>
               <p>Saturday: 8AM - 4PM</p>
               <p>Sunday: Emergency calls only</p>
+            </div>
+          </div>
+          
+          <!-- Email Support Form -->
+          <div class="email-support-form">
+            <div class="form-header">
+              <h3>✉️ Send us an Email</h3>
+              <p>Fill out the form below and we'll get back to you within 24 hours</p>
+            </div>
+            
+            <form id="emailSupportForm" class="support-form">
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="customerName">Full Name *</label>
+                  <input type="text" id="customerName" name="customerName" required>
+                </div>
+                <div class="form-group">
+                  <label for="customerEmail">Email Address *</label>
+                  <input type="email" id="customerEmail" name="customerEmail" required>
+                </div>
+              </div>
+              
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="customerPhone">Phone Number</label>
+                  <input type="tel" id="customerPhone" name="customerPhone">
+                </div>
+                <div class="form-group">
+                  <label for="eventDate">Event Date</label>
+                  <input type="date" id="eventDate" name="eventDate">
+                </div>
+              </div>
+              
+              <div class="form-group">
+                <label for="inquiryType">Inquiry Type *</label>
+                <select id="inquiryType" name="inquiryType" required>
+                  <option value="">Select inquiry type...</option>
+                  <option value="pricing">Pricing & Quotes</option>
+                  <option value="availability">Availability Check</option>
+                  <option value="wedding">Wedding Services</option>
+                  <option value="corporate">Corporate Events</option>
+                  <option value="birthday">Birthday Parties</option>
+                  <option value="general">General Information</option>
+                  <option value="support">Customer Support</option>
+                </select>
+              </div>
+              
+              <div class="form-group">
+                <label for="eventLocation">Event Location</label>
+                <input type="text" id="eventLocation" name="eventLocation" placeholder="e.g. Johannesburg, Vosloorus">
+              </div>
+              
+              <div class="form-group">
+                <label for="guestCount">Expected Number of Guests</label>
+                <select id="guestCount" name="guestCount">
+                  <option value="">Select guest count...</option>
+                  <option value="1-25">1-25 guests</option>
+                  <option value="26-50">26-50 guests</option>
+                  <option value="51-100">51-100 guests</option>
+                  <option value="101-200">101-200 guests</option>
+                  <option value="201-300">201-300 guests</option>
+                  <option value="300+">300+ guests</option>
+                </select>
+              </div>
+              
+              <div class="form-group">
+                <label for="customerMessage">Message & Requirements *</label>
+                <textarea id="customerMessage" name="customerMessage" rows="5" required 
+                  placeholder="Please describe your event requirements, preferred tent size, additional services needed, or any specific questions you have..."></textarea>
+              </div>
+              
+              <div class="form-group checkbox-group">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="agreedToTerms" name="agreedToTerms" required>
+                  <span class="checkmark"></span>
+                  I agree to be contacted by Siphila Ngomusa Tents Hire CC regarding my inquiry
+                </label>
+              </div>
+              
+              <button type="submit" class="btn btn-primary email-submit-btn">
+                <span class="btn-text">Send Email</span>
+                <span class="btn-loading" style="display: none;">
+                  <i class="spinner"></i> Sending...
+                </span>
+              </button>
+            </form>
+            
+            <div id="emailFormSuccess" class="form-message success-message" style="display: none;">
+              <i class="success-icon">✅</i>
+              <h4>Email Sent Successfully!</h4>
+              <p>Thank you for contacting us. We'll get back to you within 24 hours.</p>
+            </div>
+            
+            <div id="emailFormError" class="form-message error-message" style="display: none;">
+              <i class="error-icon">❌</i>
+              <h4>Email Failed to Send</h4>
+              <p>There was an issue sending your email. Please try again or contact us directly.</p>
             </div>
           </div>
         </div>
