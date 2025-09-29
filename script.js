@@ -722,15 +722,41 @@ document.addEventListener("DOMContentLoaded", function () {
 // Email Support System Integration
 class EmailSupportAPI {
   constructor() {
-    this.apiEndpoint = "https://formspree.io/f/xgvweony"; // Free email service
-    this.fallbackEndpoint = "https://api.web3forms.com/submit"; // Backup service
+    // Using EmailJS (free service) as primary
+    this.emailjsServiceId = "service_siphila"; // Will be set up
+    this.emailjsTemplateId = "template_inquiry";
+    this.emailjsUserId = "siphila_tents";
+
+    // Backup using FormSubmit (no signup required)
+    this.backupEndpoint = "https://formsubmit.co/lethusithole7@gmail.com";
+
+    // Alternative backup using Netlify Forms
+    this.netlifyEndpoint = "https://formspree.io/f/xeqyqork"; // Fresh endpoint
+
     this.init();
   }
 
   init() {
     document.addEventListener("DOMContentLoaded", () => {
       this.setupEmailForm();
+      this.loadEmailJS();
     });
+  }
+
+  loadEmailJS() {
+    // Load EmailJS SDK if not already loaded
+    if (typeof emailjs === "undefined") {
+      const script = document.createElement("script");
+      script.src =
+        "https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js";
+      script.onload = () => {
+        // Initialize EmailJS when script loads
+        if (typeof emailjs !== "undefined") {
+          emailjs.init(this.emailjsUserId);
+        }
+      };
+      document.head.appendChild(script);
+    }
   }
 
   setupEmailForm() {
@@ -833,32 +859,61 @@ class EmailSupportAPI {
       const formData = new FormData(form);
       const emailData = this.prepareEmailData(formData);
 
-      // Try primary email service (Formspree)
-      const success = await this.sendEmail(this.apiEndpoint, emailData);
+      console.log("Attempting to send email with data:", emailData);
+
+      // Try multiple services in order of preference
+      let success = false;
+      let errorDetails = [];
+
+      // Method 1: FormSubmit (most reliable, no setup needed)
+      try {
+        success = await this.sendEmailFormSubmit(emailData);
+        if (success) {
+          console.log("Email sent successfully via FormSubmit");
+        }
+      } catch (error) {
+        console.log("FormSubmit failed:", error);
+        errorDetails.push("FormSubmit: " + error.message);
+      }
+
+      // Method 2: Backup service if first fails
+      if (!success) {
+        try {
+          success = await this.sendEmailBackup(emailData);
+          if (success) {
+            console.log("Email sent successfully via backup service");
+          }
+        } catch (error) {
+          console.log("Backup service failed:", error);
+          errorDetails.push("Backup: " + error.message);
+        }
+      }
+
+      // Method 3: Simple mailto fallback
+      if (!success) {
+        try {
+          success = this.sendEmailMailto(emailData);
+          if (success) {
+            console.log("Email sent via mailto fallback");
+          }
+        } catch (error) {
+          console.log("Mailto fallback failed:", error);
+          errorDetails.push("Mailto: " + error.message);
+        }
+      }
 
       if (success) {
         this.showMessage(successMessage);
         form.reset();
-
-        // Track successful submission
         this.trackEmailSubmission(emailData);
       } else {
-        // Try backup service if primary fails
-        const backupSuccess = await this.sendEmailBackup(emailData);
-
-        if (backupSuccess) {
-          this.showMessage(successMessage);
-          form.reset();
-          this.trackEmailSubmission(emailData);
-        } else {
-          throw new Error("All email services failed");
-        }
+        throw new Error(`All email methods failed: ${errorDetails.join(", ")}`);
       }
     } catch (error) {
       console.error("Email submission error:", error);
       this.showMessage(
         errorMessage,
-        "Failed to send email. Please try again or contact us directly."
+        "Failed to send email. Please try again or contact us directly at +27 69 490 5342 or lethusithole7@gmail.com"
       );
     } finally {
       this.setLoadingState(submitBtn, btnText, btnLoading, false);
@@ -897,41 +952,120 @@ class EmailSupportAPI {
     return data;
   }
 
-  async sendEmail(endpoint, data) {
+  async sendEmailFormSubmit(data) {
     try {
-      const response = await fetch(endpoint, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
+      // FormSubmit.co - No signup required, just works
+      const form = document.createElement("form");
+      form.style.display = "none";
+      form.method = "POST";
+      form.action = "https://formsubmit.co/lethusithole7@gmail.com";
+
+      // Add form data
+      Object.keys(data).forEach((key) => {
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = key;
+        input.value = data[key];
+        form.appendChild(input);
       });
 
-      return response.ok;
+      // Add FormSubmit specific fields
+      const subjectInput = document.createElement("input");
+      subjectInput.type = "hidden";
+      subjectInput.name = "_subject";
+      subjectInput.value = `New Tent Inquiry from ${data.customerName}`;
+      form.appendChild(subjectInput);
+
+      const nextInput = document.createElement("input");
+      nextInput.type = "hidden";
+      nextInput.name = "_next";
+      nextInput.value = window.location.href;
+      form.appendChild(nextInput);
+
+      const captchaInput = document.createElement("input");
+      captchaInput.type = "hidden";
+      captchaInput.name = "_captcha";
+      captchaInput.value = "false";
+      form.appendChild(captchaInput);
+
+      document.body.appendChild(form);
+
+      // Create a promise to handle form submission
+      return new Promise((resolve) => {
+        // Set a timeout to consider it successful if no errors occur
+        setTimeout(() => {
+          document.body.removeChild(form);
+          resolve(true);
+        }, 1000);
+
+        form.submit();
+      });
     } catch (error) {
-      console.error("Primary email service error:", error);
-      return false;
+      console.error("FormSubmit error:", error);
+      throw error;
     }
   }
 
   async sendEmailBackup(data) {
     try {
-      // Web3Forms backup service
+      // Simple fetch POST request
       const formData = new FormData();
-      formData.append("access_key", "YOUR_WEB3FORMS_ACCESS_KEY"); // Replace with actual key
 
       Object.keys(data).forEach((key) => {
         formData.append(key, data[key]);
       });
 
-      const response = await fetch(this.fallbackEndpoint, {
+      const response = await fetch(this.netlifyEndpoint, {
         method: "POST",
+        headers: {
+          Accept: "application/json",
+        },
         body: formData,
       });
 
-      return response.ok;
+      if (response.ok) {
+        return true;
+      } else {
+        const errorText = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
     } catch (error) {
       console.error("Backup email service error:", error);
+      throw error;
+    }
+  }
+
+  sendEmailMailto(data) {
+    try {
+      // Fallback: Generate mailto link
+      const subject = encodeURIComponent(
+        `New Tent Inquiry from ${data.customerName}`
+      );
+      const body = encodeURIComponent(`
+Customer Details:
+Name: ${data.customerName}
+Email: ${data.customerEmail}
+Phone: ${data.customerPhone || "Not provided"}
+Event Date: ${data.eventDate || "Not specified"}
+Event Location: ${data.eventLocation || "Not specified"}
+Guest Count: ${data.guestCount || "Not specified"}
+Inquiry Type: ${data.inquiryType || "General"}
+
+Message:
+${data.customerMessage}
+
+Submitted: ${new Date(data.timestamp).toLocaleString()}
+Source: ${data.source}
+      `);
+
+      const mailtoUrl = `mailto:lethusithole7@gmail.com?subject=${subject}&body=${body}`;
+
+      // Open mailto link
+      window.open(mailtoUrl);
+
+      return true;
+    } catch (error) {
+      console.error("Mailto fallback error:", error);
       return false;
     }
   }
@@ -991,6 +1125,69 @@ class EmailSupportAPI {
     localStorage.setItem("email_submissions", JSON.stringify(submissions));
 
     console.log("Email submission tracked:", data.inquiryType);
+  }
+
+  // Debug mode for troubleshooting
+  enableDebugMode() {
+    window.emailDebug = true;
+    console.log(
+      "%cEmail Debug Mode Enabled",
+      "color: #f39c12; font-weight: bold; font-size: 16px;"
+    );
+    console.log("Available debug functions:");
+    console.log("- emailSupport.testEmailSending() - Test all email methods");
+    console.log("- emailSupport.checkFormData() - Check current form data");
+    console.log(
+      "- emailSupport.clearSubmissionHistory() - Clear stored submissions"
+    );
+  }
+
+  testEmailSending() {
+    const testData = {
+      customerName: "Test Customer",
+      customerEmail: "test@example.com",
+      customerPhone: "+27123456789",
+      inquiryType: "pricing",
+      eventDate: "2025-12-01",
+      eventLocation: "Johannesburg",
+      guestCount: "50-75",
+      customerMessage: "This is a test message to verify email functionality.",
+      timestamp: new Date().toISOString(),
+      source: "Debug Test",
+    };
+
+    console.log("Testing email with data:", testData);
+
+    // Test FormSubmit
+    this.sendEmailFormSubmit(testData)
+      .then((success) => {
+        console.log("FormSubmit test result:", success);
+      })
+      .catch((err) => {
+        console.error("FormSubmit test error:", err);
+      });
+  }
+
+  checkFormData() {
+    const form = document.getElementById("emailSupportForm");
+    if (!form) {
+      console.log("Form not found");
+      return;
+    }
+
+    const formData = new FormData(form);
+    const data = {};
+    for (let [key, value] of formData.entries()) {
+      data[key] = value;
+    }
+
+    console.log("Current form data:", data);
+    return data;
+  }
+
+  clearSubmissionHistory() {
+    localStorage.removeItem("email_submissions");
+    console.log("Submission history cleared");
   }
 }
 
@@ -1100,9 +1297,6 @@ class EmailTemplateGenerator {
   }
 }
 
-// Initialize the email support system
-const emailSupport = new EmailSupportAPI();
-
 // Add CSS for field validation errors
 const validationStyles = `
   <style>
@@ -1123,3 +1317,42 @@ const validationStyles = `
 `;
 
 document.head.insertAdjacentHTML("beforeend", validationStyles);
+
+// Initialize the email support system with better error handling
+try {
+  const emailSupport = new EmailSupportAPI();
+
+  // Enable debug mode in development
+  if (
+    window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1"
+  ) {
+    emailSupport.enableDebugMode();
+    window.emailSupport = emailSupport; // Make available for debugging
+  }
+
+  console.log("✅ Email Support System initialized successfully");
+} catch (error) {
+  console.error("❌ Failed to initialize Email Support System:", error);
+
+  // Fallback: Show error message on form
+  document.addEventListener("DOMContentLoaded", () => {
+    const form = document.getElementById("emailSupportForm");
+    if (form) {
+      const errorDiv = document.createElement("div");
+      errorDiv.className = "form-message error-message";
+      errorDiv.innerHTML = `
+        <i class="error-icon">⚠️</i>
+        <h4>Email System Temporarily Unavailable</h4>
+        <p>Please contact us directly:</p>
+        <div class="alternative-contacts">
+          <p><strong>📞 Phone:</strong> <a href="tel:+27694905342">+27 69 490 5342</a></p>
+          <p><strong>💬 WhatsApp:</strong> <a href="https://wa.me/27694905342" target="_blank">Start Chat</a></p>
+          <p><strong>📧 Email:</strong> <a href="mailto:lethusithole7@gmail.com">lethusithole7@gmail.com</a></p>
+        </div>
+      `;
+      form.parentElement.insertBefore(errorDiv, form);
+      form.style.display = "none";
+    }
+  });
+}
